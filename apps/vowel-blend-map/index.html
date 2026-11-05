@@ -1,0 +1,605 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Vowel Blend Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Gentium+Book+Plus:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the vowel map is the instrument (left, large); the lab panel reads out the harmonics it produces (right). Stacks on phones. */
+:root{
+  --paper:#f2f3f7; --card:#ffffff; --ink:#1a2132; --muted:#5b6377; --line:#d7dbe5;
+  --accent:#2f43c0; --accent-ink:#ffffff; --accent-soft:#e4e7fa; --grid:#eceef4;
+  --f-display:"Gentium Book Plus","Charis SIL","Noto Serif","Times New Roman",serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0f1219; --card:#171b25; --ink:#e6e8ef; --muted:#9ba2b4; --line:#2b3142;
+    --accent:#8e9cff; --accent-ink:#0f1219; --accent-soft:#232a47; --grid:#1f2431; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0f1219; --card:#171b25; --ink:#e6e8ef; --muted:#9ba2b4; --line:#2b3142;
+  --accent:#8e9cff; --accent-ink:#0f1219; --accent-soft:#232a47; --grid:#1f2431; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--paper); color:var(--ink); font-family:var(--f-body); font-size:15px; line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:22px 40px;
+}
+.wrap{max-width:1180px; margin:0 auto; display:flex; flex-direction:column; gap:18px}
+header h1{font-family:var(--f-display); font-weight:700; font-size:34px; line-height:1.1; margin:0; text-wrap:balance}
+header h1 span{font-weight:400; font-style:italic; color:var(--muted)}
+header p{margin:6px 0 0; color:var(--muted); max-width:68ch}
+.layout{display:grid; grid-template-columns:minmax(0,1.12fr) minmax(0,1fr); gap:18px; align-items:start}
+@media (max-width:880px){ .layout{grid-template-columns:minmax(0,1fr)} }
+.card{background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; display:flex; flex-direction:column; gap:14px; min-width:0}
+.label{font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); margin:0}
+#map{width:100%; aspect-ratio:1/1; max-width:100%; display:block; touch-action:none; cursor:crosshair; border-radius:6px}
+#map:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+.mixline{display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 14px; min-height:34px}
+.mix{font-family:var(--f-display); font-size:22px; line-height:1.25}
+.mix .chip{display:inline-flex; align-items:baseline; gap:5px; margin-right:12px; white-space:nowrap}
+.mix .dot{width:10px; height:10px; border-radius:50%; display:inline-block; align-self:center}
+.mix .pct{font-family:var(--f-mono); font-size:14px; color:var(--muted)}
+.hint{color:var(--muted); font-size:13px; margin:0}
+.row{display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px}
+button{font:inherit; color:inherit}
+.play{
+  display:inline-flex; align-items:center; gap:8px; border:0; border-radius:8px; padding:10px 18px;
+  background:var(--accent); color:var(--accent-ink); font-weight:700; cursor:pointer; min-width:116px; justify-content:center;
+}
+.play:focus-visible,.seg button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.play svg{width:14px; height:14px; fill:currentColor}
+.seg{display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden}
+.seg button{border:0; background:transparent; padding:6px 12px; cursor:pointer; font-size:14px}
+.seg button + button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent-soft); color:var(--ink); font-weight:700; box-shadow:inset 0 -2px 0 var(--accent)}
+.vol{display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px}
+input[type=range]{accent-color:var(--accent)}
+.sounds{display:grid; grid-template-columns:auto minmax(0,1fr); gap:4px 18px; align-items:center}
+.big-ipa{font-family:var(--f-display); font-size:56px; line-height:1; font-weight:700; grid-row:span 2; min-width:64px; text-align:center}
+.sounds .word{font-family:var(--f-display); font-size:18px}
+.sounds .word i{color:var(--muted)}
+.formants{display:flex; flex-wrap:wrap; gap:4px 16px; font-family:var(--f-mono); font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums}
+.formants b{color:var(--ink); font-weight:500}
+canvas.plot{width:100%; display:block}
+#harm{height:190px}
+#wave{height:110px}
+.corners{display:flex; flex-direction:column; gap:8px}
+.corner{display:grid; grid-template-columns:14px minmax(0,8.5rem) minmax(0,1fr) 3.4rem; gap:10px; align-items:center}
+.corner .sw{width:14px; height:14px; border-radius:50%}
+.corner select{width:100%; font:inherit; font-size:14px; padding:4px 6px; border-radius:6px; border:1px solid var(--line); background:var(--card); color:var(--ink)}
+.corner .bar{height:8px; border-radius:4px; background:var(--grid); overflow:hidden}
+.corner .bar i{display:block; height:100%; width:0; border-radius:4px}
+.corner .p{font-family:var(--f-mono); font-size:13px; text-align:right; font-variant-numeric:tabular-nums}
+.settings{display:grid; grid-template-columns:auto minmax(0,1fr); gap:12px 14px; align-items:center}
+.settings > .label{white-space:nowrap}
+.pitch{display:flex; align-items:center; gap:10px; min-width:0}
+.pitch input{flex:1; min-width:0}
+.pitch output{font-family:var(--f-mono); font-size:13px; white-space:nowrap; font-variant-numeric:tabular-nums}
+.check{display:inline-flex; align-items:center; gap:8px; font-size:14px; cursor:pointer}
+.note{font-size:13px; color:var(--muted); margin:0; max-width:65ch}
+.note b{color:var(--ink)}
+hr{border:0; border-top:1px solid var(--line); margin:0}
+@media (max-width:480px){
+  header h1{font-size:28px}
+  .settings{grid-template-columns:minmax(0,1fr)}
+  .corner{grid-template-columns:14px minmax(0,7rem) minmax(0,1fr) 3rem}
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Vowel Blend Map <span>— place a point, hear the vowel</span></h1>
+    <p>Each corner is a vowel. Drag the point anywhere inside the shape and the sound is rebuilt from harmonics: the closer you are to a corner, the more of that vowel's formant shape the harmonics take on. Halfway along an edge is exactly halfway between two vowels.</p>
+  </header>
+
+  <div class="layout">
+    <section class="card" aria-label="Vowel map">
+      <canvas id="map" tabindex="0" aria-label="Vowel map. Click or drag to place the point. Arrow keys move it."></canvas>
+      <div class="mixline"><div class="mix" id="mix"></div></div>
+      <p class="hint">Click or drag to place the point. Hold the mouse down to listen, or press Play to keep it sounding. Small rings mark exact halfway points; the point snaps to them. Space plays and stops; arrow keys nudge the point.</p>
+    </section>
+
+    <aside class="card" aria-label="Sound and harmonics">
+      <div class="row">
+        <button class="play" id="play" aria-pressed="false"><svg viewBox="0 0 14 14" id="playIcon"><path d="M2 1l11 6-11 6z"/></svg><span id="playTxt">Play</span></button>
+        <label class="vol">Volume <input type="range" id="vol" min="0" max="1" step="0.01" value="0.6"></label>
+      </div>
+
+      <div>
+        <p class="label">Sounds closest to</p>
+        <div class="sounds" style="margin-top:6px">
+          <div class="big-ipa" id="nearIpa">ɑ</div>
+          <div class="word" id="nearWord"></div>
+          <div class="formants" id="formants"></div>
+        </div>
+      </div>
+
+      <hr>
+      <div>
+        <p class="label">Harmonics being played</p>
+        <canvas class="plot" id="harm" aria-label="Bar chart of harmonic levels in dB against frequency"></canvas>
+        <p class="hint" id="harmCap"></p>
+      </div>
+      <div>
+        <p class="label">Waveform</p>
+        <canvas class="plot" id="wave" aria-label="Three periods of the resulting waveform"></canvas>
+      </div>
+
+      <hr>
+      <div class="corners" id="corners"></div>
+
+      <div class="settings">
+        <p class="label">Vowels</p>
+        <div class="seg" id="segN">
+          <button data-v="3" aria-pressed="true">3</button><button data-v="4">4</button><button data-v="5">5</button><button data-v="6">6</button>
+        </div>
+        <p class="label">Voice</p>
+        <div class="seg" id="segVoice">
+          <button data-v="m" aria-pressed="true">Man</button><button data-v="w">Woman</button>
+        </div>
+        <p class="label">Pitch</p>
+        <div class="pitch"><input type="range" id="pitch" min="0" max="1" step="0.001" aria-label="Pitch"><output id="pitchOut"></output></div>
+        <p class="label">Blend</p>
+        <div class="seg" id="segMode">
+          <button data-v="formant" aria-pressed="true">Formants</button><button data-v="harm">Harmonic levels</button>
+        </div>
+        <p class="label">Vibrato</p>
+        <label class="check"><input type="checkbox" id="vib" checked> Gentle vibrato (makes it sound more like a voice)</label>
+      </div>
+
+      <p class="note" id="eqNote"></p>
+      <p class="note"><b>Formants</b> slides the resonances (F1, F2, F3) smoothly from one vowel to the other, so the midpoint is a real in‑between vowel. <b>Harmonic levels</b> averages each harmonic's level in dB instead; the midpoint keeps both vowels' peaks and sounds more like the two layered.</p>
+    </aside>
+  </div>
+</div>
+
+<script>
+(() => {
+// ---------- Vowel data: Peterson & Barney (1952) average F1/F2/F3 ----------
+const VOW = {
+  'i': {say:'ee', word:'see',     m:[270,2290,3010], w:[310,2790,3310]},
+  'ɪ': {say:'ih', word:'sit',     m:[390,1990,2550], w:[430,2480,3070]},
+  'ɛ': {say:'eh', word:'bed',     m:[530,1840,2480], w:[610,2330,2990]},
+  'æ': {say:'a',  word:'cat',     m:[660,1720,2410], w:[860,2050,2850]},
+  'ɑ': {say:'ah', word:'father',  m:[730,1090,2440], w:[850,1220,2810]},
+  'ɔ': {say:'aw', word:'thought', m:[570, 840,2410], w:[590, 920,2710]},
+  'ʌ': {say:'uh', word:'cup',     m:[640,1190,2390], w:[760,1400,2780]},
+  'ʊ': {say:'oo', word:'book',    m:[440,1020,2240], w:[470,1160,2680]},
+  'u': {say:'oo', word:'boot',    m:[300, 870,2240], w:[370, 950,2670]},
+  'ɝ': {say:'er', word:'bird',    m:[490,1350,1690], w:[500,1640,1960]},
+};
+const KEYS = Object.keys(VOW);
+const DEFAULTS = {3:['ɑ','i','u'], 4:['æ','i','u','ɑ'], 5:['ɑ','ɛ','i','u','ɔ'], 6:['æ','ɛ','i','u','ɔ','ɑ']};
+const SLOT = ['#e0565b','#3b8fd9','#d99a26','#3aa66a','#9a6ad6','#2ba3a3'];
+const MAXH = 48, FMAX = 5000;
+
+const S = {
+  n:3, corners:[...DEFAULTS[3]], p:{x:0,y:0}, voice:'m', f0:120, mode:'formant',
+  vib:true, vol:0.6, playing:false, held:false
+};
+
+// ---------- Geometry ----------
+let V = [];
+function makeVerts(n){
+  const off = n % 2 ? 0 : 180 / n;
+  V = [];
+  for (let k = 0; k < n; k++){
+    const t = (90 + 360 * k / n + off) * Math.PI / 180;
+    V.push({x:Math.cos(t), y:Math.sin(t)});
+  }
+}
+const area = (a,b,c) => ((b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x)) / 2;
+function orient(){ let s=0; for (let i=0;i<V.length;i++) s += area({x:0,y:0}, V[i], V[(i+1)%V.length]); return Math.sign(s); }
+
+// Wachspress coordinates: exact at corners, linear along edges, smooth inside.
+function weights(p){
+  const n = V.length, sg = orient(), a = [];
+  for (let i=0;i<n;i++) a.push(sg * area(p, V[i], V[(i+1)%n]));
+  for (let i=0;i<n;i++){
+    if (a[i] < 1e-7){
+      const A = V[i], B = V[(i+1)%n], dx=B.x-A.x, dy=B.y-A.y;
+      let t = ((p.x-A.x)*dx + (p.y-A.y)*dy) / (dx*dx+dy*dy);
+      t = Math.min(1, Math.max(0, t));
+      const w = new Array(n).fill(0); w[i] = 1-t; w[(i+1)%n] += t; return w;
+    }
+  }
+  const w = []; let sum = 0;
+  for (let i=0;i<n;i++){
+    const C = sg * area(V[(i-1+n)%n], V[i], V[(i+1)%n]);
+    const wi = C / (a[(i-1+n)%n] * a[i]); w.push(wi); sum += wi;
+  }
+  return w.map(x => x/sum);
+}
+function inside(p){ const sg=orient(); for (let i=0;i<V.length;i++) if (sg*area(p,V[i],V[(i+1)%V.length]) < 0) return false; return true; }
+function clampToPoly(p){
+  if (inside(p)) return p;
+  let best=null, bd=Infinity;
+  for (let i=0;i<V.length;i++){
+    const A=V[i], B=V[(i+1)%V.length], dx=B.x-A.x, dy=B.y-A.y;
+    let t=((p.x-A.x)*dx+(p.y-A.y)*dy)/(dx*dx+dy*dy); t=Math.min(1,Math.max(0,t));
+    const q={x:A.x+t*dx, y:A.y+t*dy}, d=(q.x-p.x)**2+(q.y-p.y)**2;
+    if (d<bd){bd=d; best=q;}
+  }
+  return best;
+}
+function snapTargets(){
+  const t=[{x:0,y:0}];
+  for (let i=0;i<V.length;i++){ const A=V[i],B=V[(i+1)%V.length]; t.push(A, {x:(A.x+B.x)/2, y:(A.y+B.y)/2}); }
+  return t;
+}
+
+// ---------- Synthesis ----------
+function formantSet(key){
+  const t = S.voice === 'w' ? VOW[key].w : VOW[key].m;
+  return S.voice === 'w'
+    ? {F:[t[0],t[1],t[2],4100,4950], B:[90,110,170,280,320]}
+    : {F:[t[0],t[1],t[2],3500,4500], B:[80,100,150,250,300]};
+}
+function blendSets(sets, w){
+  const F=[0,0,0,0,0], B=[0,0,0,0,0];
+  sets.forEach((s,k)=>{ for (let i=0;i<5;i++){ F[i] += w[k]*Math.log(s.F[i]); B[i] += w[k]*s.B[i]; } });
+  return {F:F.map(Math.exp), B};
+}
+// Cascade of two-pole resonators, gain 1 at 0 Hz.
+function envMag(f, set){
+  let g = 1; const w = 2*Math.PI*f;
+  for (let i=0;i<5;i++){
+    const s = Math.PI*set.B[i], wf = 2*Math.PI*set.F[i];
+    g *= (s*s + wf*wf) / Math.sqrt((s*s + (w-wf)**2) * (s*s + (w+wf)**2));
+  }
+  return g;
+}
+const numH = () => Math.min(MAXH, Math.floor(FMAX / S.f0));
+function ampsFor(set){ const H=numH(), a=[]; for (let n=1;n<=H;n++) a.push(envMag(n*S.f0, set) / n); return a; }
+function peakFormants(a){
+  let i1=-1, i2=-1;
+  a.forEach((v,i)=>{ const f=(i+1)*S.f0; if (f>=200 && f<=1000 && (i1<0 || v>a[i1])) i1=i; });
+  const F1 = i1>=0 ? (i1+1)*S.f0 : 500, lo = Math.max(F1+250, 650);
+  a.forEach((v,i)=>{ const f=(i+1)*S.f0; if (f>=lo && f<=3000 && (i2<0 || v>a[i2])) i2=i; });
+  return [F1, i2>=0 ? (i2+1)*S.f0 : 1500];
+}
+
+let cur = {w:[], amps:[], set:null, F:[], est:false};
+function compute(){
+  const w = weights(S.p);
+  const sets = S.corners.map(formantSet);
+  let amps, set = blendSets(sets, w), F, est = false;
+  if (S.mode === 'formant'){
+    amps = ampsFor(set); F = set.F.slice(0,3);
+  } else {
+    const per = sets.map(ampsFor), H = numH();
+    amps = [];
+    for (let n=0;n<H;n++){ let db=0; per.forEach((a,k)=> db += w[k]*20*Math.log10(Math.max(a[n],1e-7))); amps.push(10**(db/20)); }
+    F = peakFormants(amps); est = true;
+  }
+  let ss=0; amps.forEach(a=>ss+=a*a/2);
+  const k = 0.2 / Math.sqrt(ss); amps = amps.map(a=>a*k);
+  cur = {w, amps, set, F, est, norm:k};
+}
+function nearest(F){
+  let best=null, bd=Infinity;
+  for (const key of KEYS){
+    const t = S.voice==='w' ? VOW[key].w : VOW[key].m;
+    const d = Math.log(F[0]/t[0])**2 + 0.6*Math.log(F[1]/t[1])**2;
+    if (d<bd){bd=d; best=key;}
+  }
+  return best;
+}
+
+// ---------- Audio: one sine oscillator per harmonic ----------
+let ac=null, master, oscs=[], gains=[], vibG=[], lfo;
+const VIB_CENTS = 18;
+function ensureAudio(){
+  if (ac){ if (ac.state==='suspended') ac.resume(); return; }
+  ac = new (window.AudioContext || window.webkitAudioContext)();
+  master = ac.createGain(); master.gain.value = 0;
+  const comp = ac.createDynamicsCompressor();
+  comp.threshold.value=-6; comp.ratio.value=10; comp.attack.value=0.003; comp.release.value=0.2;
+  master.connect(comp); comp.connect(ac.destination);
+  lfo = ac.createOscillator(); lfo.frequency.value = 5.2; lfo.start();
+  for (let n=1;n<=MAXH;n++){
+    const o = ac.createOscillator(); o.frequency.value = n*S.f0;
+    const g = ac.createGain(); g.gain.value = 0;
+    const vg = ac.createGain(); vg.gain.value = 0;
+    lfo.connect(vg); vg.connect(o.frequency); o.connect(g); g.connect(master); o.start();
+    oscs.push(o); gains.push(g); vibG.push(vg);
+  }
+  pushAudio(true);
+}
+function pushAudio(all){
+  if (!ac) return;
+  const t = ac.currentTime, nyq = ac.sampleRate/2, k = 2**(VIB_CENTS/1200) - 1;
+  for (let i=0;i<MAXH;i++){
+    const n=i+1, f=n*S.f0, a = (i<cur.amps.length && f<nyq) ? cur.amps[i] : 0;
+    gains[i].gain.setTargetAtTime(a, t, 0.025);
+    if (all){
+      oscs[i].frequency.setTargetAtTime(f, t, 0.03);
+      vibG[i].gain.setTargetAtTime(S.vib ? f*k : 0, t, 0.05);
+    }
+  }
+  gate();
+}
+function gate(){
+  if (!ac) return;
+  const open = S.playing || S.held;
+  master.gain.setTargetAtTime(open ? S.vol : 0, ac.currentTime, open ? 0.015 : 0.05);
+  drawMap();
+}
+
+// ---------- Theme ----------
+let T = {};
+function readTheme(){
+  const cs = getComputedStyle(document.documentElement);
+  for (const k of ['card','ink','muted','line','accent','accent-ink','grid','f-display','f-body','f-mono']) T[k] = cs.getPropertyValue('--'+k).trim();
+  T.dark = cs.colorScheme === 'dark' || matchMedia('(prefers-color-scheme: dark)').matches && document.documentElement.dataset.theme !== 'light';
+  if (document.documentElement.dataset.theme === 'dark') T.dark = true;
+}
+
+// ---------- Canvas helpers ----------
+const mapC = document.getElementById('map'), harmC = document.getElementById('harm'), waveC = document.getElementById('wave');
+function fit(c){
+  const r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+  const w = Math.max(1, Math.round(r.width*d)), h = Math.max(1, Math.round(r.height*d));
+  if (c.width!==w || c.height!==h){ c.width=w; c.height=h; }
+  const x = c.getContext('2d'); x.setTransform(d,0,0,d,0,0); return {x, w:r.width, h:r.height};
+}
+function hexRGB(h){ const v=parseInt(h.slice(1),16); return [v>>16&255, v>>8&255, v&255]; }
+
+let geo = {cx:0, cy:0, R:1};
+function layoutMap(w,h){
+  const R = Math.min(w,h) * 0.335;
+  let lo=Infinity, hi=-Infinity; V.forEach(v=>{lo=Math.min(lo,v.y); hi=Math.max(hi,v.y);});
+  geo = {cx:w/2, cy:h/2 - (lo+hi)/2*R, R};
+}
+const toPx = p => ({x: geo.cx + p.x*geo.R, y: geo.cy + p.y*geo.R});
+const fromPx = (x,y) => ({x:(x-geo.cx)/geo.R, y:(y-geo.cy)/geo.R});
+
+// Weight field: each pixel tinted by the blend of corner colours at that spot.
+let field = null, fieldKey = '';
+function buildField(){
+  const key = S.n + '';
+  if (field && fieldKey === key) return;
+  const N = 96, c = document.createElement('canvas'); c.width = c.height = N;
+  const x = c.getContext('2d'), img = x.createImageData(N,N), cols = SLOT.map(hexRGB);
+  for (let j=0;j<N;j++) for (let i=0;i<N;i++){
+    const p = {x: -1 + 2*(i+.5)/N, y: -1 + 2*(j+.5)/N}, o = (j*N+i)*4;
+    if (!inside(clampSoft(p))) continue;
+    const w = weights(clampToPoly(p)); let r=0,g=0,b=0;
+    w.forEach((wi,k)=>{ r+=wi*cols[k][0]; g+=wi*cols[k][1]; b+=wi*cols[k][2]; });
+    img.data[o]=r; img.data[o+1]=g; img.data[o+2]=b; img.data[o+3]=255;
+  }
+  x.putImageData(img,0,0); field = c; fieldKey = key;
+}
+function clampSoft(p){ return {x:p.x*0.97, y:p.y*0.97}; }
+
+function polyPath(x){
+  x.beginPath(); V.forEach((v,i)=>{ const q=toPx(v); i? x.lineTo(q.x,q.y) : x.moveTo(q.x,q.y); }); x.closePath();
+}
+
+function drawMap(){
+  const {x,w,h} = fit(mapC); layoutMap(w,h); buildField();
+  x.clearRect(0,0,w,h);
+  const open = S.playing || S.held;
+  // field
+  x.save(); polyPath(x); x.clip();
+  x.globalAlpha = T.dark ? 0.26 : 0.2; x.imageSmoothingEnabled = true;
+  x.drawImage(field, geo.cx-geo.R, geo.cy-geo.R, 2*geo.R, 2*geo.R);
+  x.restore();
+  // pairwise lines (all pairs), edges solid
+  x.lineWidth = 1;
+  for (let i=0;i<V.length;i++) for (let j=i+1;j<V.length;j++){
+    const edge = (j===i+1) || (i===0 && j===V.length-1);
+    if (edge) continue;
+    const a=toPx(V[i]), b=toPx(V[j]);
+    x.strokeStyle = T.line; x.setLineDash([3,5]); x.beginPath(); x.moveTo(a.x,a.y); x.lineTo(b.x,b.y); x.stroke();
+  }
+  x.setLineDash([]); x.strokeStyle = T.ink; x.lineWidth = 1.5; polyPath(x); x.stroke();
+  // halfway rings + centre
+  x.lineWidth = 1.2; x.strokeStyle = T.muted;
+  for (let i=0;i<V.length;i++){
+    const a=V[i], b=V[(i+1)%V.length], m=toPx({x:(a.x+b.x)/2, y:(a.y+b.y)/2});
+    x.fillStyle = T.card; x.beginPath(); x.arc(m.x,m.y,4.5,0,7); x.fill(); x.stroke();
+  }
+  const c0 = toPx({x:0,y:0}); x.beginPath(); x.moveTo(c0.x-6,c0.y); x.lineTo(c0.x+6,c0.y); x.moveTo(c0.x,c0.y-6); x.lineTo(c0.x,c0.y+6); x.stroke();
+  // weight lines
+  const P = toPx(S.p);
+  cur.w.forEach((wi,k)=>{
+    if (wi < 0.004) return; const v = toPx(V[k]);
+    x.globalAlpha = 0.25 + 0.65*wi; x.strokeStyle = SLOT[k]; x.lineWidth = 1 + 7*wi; x.lineCap='round';
+    x.beginPath(); x.moveTo(P.x,P.y); x.lineTo(v.x,v.y); x.stroke();
+  });
+  x.globalAlpha = 1;
+  // corners + labels
+  V.forEach((v,k)=>{
+    const q = toPx(v), key = S.corners[k];
+    x.fillStyle = SLOT[k]; x.strokeStyle = T.card; x.lineWidth = 2.5;
+    x.beginPath(); x.arc(q.x,q.y,7 + 5*cur.w[k],0,7); x.fill(); x.stroke();
+    const L = {x: geo.cx + v.x*(geo.R+34), y: geo.cy + v.y*(geo.R+30)};
+    x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillStyle = T.ink; x.font = `700 28px ${T['f-display']}`; x.fillText(key, L.x, L.y - 7);
+    x.fillStyle = T.muted; x.font = `13px ${T['f-body']}`;
+    x.fillText(`"${VOW[key].say}" · ${VOW[key].word}`, L.x, L.y + 15);
+  });
+  // the point
+  if (open){ x.strokeStyle = T.accent; x.globalAlpha = 0.35; x.lineWidth = 6; x.beginPath(); x.arc(P.x,P.y,17,0,7); x.stroke(); x.globalAlpha = 1; }
+  x.fillStyle = T.accent; x.strokeStyle = T.card; x.lineWidth = 3;
+  x.beginPath(); x.arc(P.x,P.y,10,0,7); x.fill(); x.stroke();
+}
+
+function drawHarm(){
+  const {x,w,h} = fit(harmC); x.clearRect(0,0,w,h);
+  const L=34, R=8, Tp=18, B=22, pw=w-L-R, ph=h-Tp-B, DBMIN=-60;
+  const fx = f => L + f/FMAX*pw, dy = db => Tp + (Math.max(DBMIN,Math.min(0,db))/DBMIN)*ph;
+  const amax = Math.max(...cur.amps);
+  x.font = `11px ${T['f-mono']}`; x.textBaseline='middle';
+  for (let db=0; db>=DBMIN; db-=20){
+    x.strokeStyle = T.grid; x.lineWidth=1; x.beginPath(); x.moveTo(L,dy(db)); x.lineTo(L+pw,dy(db)); x.stroke();
+    x.fillStyle = T.muted; x.textAlign='right'; x.fillText(db+'', L-6, dy(db));
+  }
+  x.textAlign='center'; x.textBaseline='top';
+  for (let f=0; f<=FMAX; f+=1000){ x.fillStyle=T.muted; x.fillText(f? (f/1000)+'k' : '0', fx(f), h-B+6); }
+  x.textAlign='left'; x.fillText('Hz', L+pw-14, h-B+6);
+  // envelope
+  if (!cur.est){
+    x.strokeStyle = T.muted; x.globalAlpha = 0.6; x.lineWidth = 1.2; x.setLineDash([4,3]); x.beginPath();
+    for (let i=0;i<=pw;i+=2){
+      const f = Math.max(20, i/pw*FMAX), a = envMag(f, cur.set) * S.f0/f * cur.norm;
+      const y = dy(20*Math.log10(a/amax)); i? x.lineTo(L+i,y) : x.moveTo(L+i,y);
+    }
+    x.stroke(); x.setLineDash([]); x.globalAlpha = 1;
+  }
+  // bars
+  const bw = Math.max(2, Math.min(7, pw/(FMAX/S.f0)*0.45));
+  x.fillStyle = T.accent;
+  cur.amps.forEach((a,i)=>{ const f=(i+1)*S.f0, X=fx(f), y=dy(20*Math.log10(a/amax)); x.fillRect(X-bw/2, y, bw, Tp+ph-y); });
+  // formant markers
+  x.font = `600 11px ${T['f-mono']}`; x.textAlign='center'; x.textBaseline='bottom';
+  cur.F.slice(0, cur.est?2:3).forEach((F,i)=>{
+    const X = fx(F); x.strokeStyle = T.ink; x.lineWidth=1; x.beginPath(); x.moveTo(X,Tp-2); x.lineTo(X,Tp+5); x.stroke();
+    x.fillStyle = T.ink; x.fillText('F'+(i+1), X, Tp-3);
+  });
+}
+
+function drawWave(){
+  const {x,w,h} = fit(waveC); x.clearRect(0,0,w,h);
+  const N = 600, s = []; let mx = 1e-9;
+  for (let i=0;i<N;i++){ const t = 3*i/N; let v=0; cur.amps.forEach((a,k)=> v += a*Math.sin(2*Math.PI*(k+1)*t)); s.push(v); mx = Math.max(mx, Math.abs(v)); }
+  x.strokeStyle = T.grid; x.lineWidth=1; x.beginPath(); x.moveTo(0,h/2); x.lineTo(w,h/2); x.stroke();
+  for (let p=1;p<3;p++){ const X=w*p/3; x.setLineDash([2,4]); x.beginPath(); x.moveTo(X,4); x.lineTo(X,h-4); x.stroke(); }
+  x.setLineDash([]);
+  x.strokeStyle = T.ink; x.lineWidth = 1.6; x.beginPath();
+  s.forEach((v,i)=>{ const X=i/(N-1)*w, Y=h/2 - v/mx*(h/2-8); i? x.lineTo(X,Y) : x.moveTo(X,Y); }); x.stroke();
+  x.fillStyle = T.muted; x.font = `11px ${T['f-mono']}`; x.textAlign='right'; x.textBaseline='top';
+  x.fillText(`3 periods · ${(3000/S.f0).toFixed(1)} ms`, w-2, 2);
+}
+
+// ---------- Readouts ----------
+const $ = id => document.getElementById(id);
+function noteName(f){
+  const names=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'], m = 69 + 12*Math.log2(f/440), r = Math.round(m);
+  return names[(r%12+12)%12] + (Math.floor(r/12)-1);
+}
+function renderMix(){
+  const items = cur.w.map((w,k)=>({w,k})).filter(o=>o.w>=0.005).sort((a,b)=>b.w-a.w);
+  $('mix').innerHTML = items.map(o=>{
+    const key=S.corners[o.k];
+    return `<span class="chip"><span class="dot" style="background:${SLOT[o.k]}"></span>${key}<span class="pct">${Math.round(o.w*100)}%</span></span>`;
+  }).join('');
+  S.corners.forEach((key,k)=>{
+    const row = $('corners').children[k]; if (!row) return;
+    row.querySelector('.bar i').style.width = (cur.w[k]*100).toFixed(1)+'%';
+    row.querySelector('.p').textContent = Math.round(cur.w[k]*100)+'%';
+  });
+  const nk = nearest(cur.F);
+  $('nearIpa').textContent = nk;
+  $('nearWord').innerHTML = `"${VOW[nk].say}" as in <i>${VOW[nk].word}</i>`;
+  const lab = cur.est ? 'peak' : '';
+  $('formants').innerHTML = cur.F.map((F,i)=>`<span>F${i+1}${lab?' ≈':''} <b>${Math.round(F)}</b> Hz</span>`).join('');
+  $('harmCap').textContent = cur.est
+    ? `${cur.amps.length} harmonics of ${Math.round(S.f0)} Hz. Each bar's level is the weighted average (in dB) of the corner vowels' levels.`
+    : `${cur.amps.length} harmonics of ${Math.round(S.f0)} Hz. Dashed line: the blended vocal-tract shape the harmonics are filtered through.`;
+}
+
+let raf = 0;
+function update(audioAll){
+  compute(); pushAudio(!!audioAll);
+  if (!raf) raf = requestAnimationFrame(()=>{ raf=0; drawMap(); drawHarm(); drawWave(); renderMix(); });
+}
+
+function buildCorners(){
+  const box = $('corners'); box.innerHTML = '';
+  S.corners.forEach((key,k)=>{
+    const row = document.createElement('div'); row.className='corner';
+    const opts = KEYS.map(v=>`<option value="${v}"${v===key?' selected':''}>${v}  "${VOW[v].say}" · ${VOW[v].word}</option>`).join('');
+    row.innerHTML = `<span class="sw" style="background:${SLOT[k]}"></span><select id="corner${k}" aria-label="Corner ${k+1} vowel">${opts}</select><span class="bar"><i style="background:${SLOT[k]}"></i></span><span class="p">0%</span>`;
+    row.querySelector('select').addEventListener('change', e=>{ S.corners[k] = e.target.value; update(); });
+    box.appendChild(row);
+  });
+  $('eqNote').innerHTML = S.n === 3
+    ? '<b>3 vowels:</b> every vowel is the same distance from every other, so each dashed or solid side is equal.'
+    : `<b>${S.n} vowels:</b> on a flat surface only 3 points can all be equally far apart. Here the vowels sit on a regular ${S.n===4?'square':S.n===5?'pentagon':'hexagon'}, so each is equally far from its neighbours and from the centre. The centre is an equal mix of all of them.`;
+}
+
+function setLayout(n){
+  S.n = n; S.corners = [...DEFAULTS[n]]; makeVerts(n); S.p = {x:0,y:0}; field=null;
+  buildCorners(); update();
+}
+
+// ---------- Interaction ----------
+function placeFromEvent(e, snap){
+  const r = mapC.getBoundingClientRect();
+  let p = clampToPoly(fromPx(e.clientX - r.left, e.clientY - r.top));
+  if (snap){ const th = 14/geo.R; for (const t of snapTargets()){ if (Math.hypot(t.x-p.x, t.y-p.y) < th){ p = {x:t.x, y:t.y}; break; } } }
+  S.p = p; update();
+}
+mapC.addEventListener('pointerdown', e=>{
+  mapC.setPointerCapture(e.pointerId); mapC.focus({preventScroll:true});
+  ensureAudio(); S.held = true; placeFromEvent(e, true); gate();
+});
+mapC.addEventListener('pointermove', e=>{ if (S.held) placeFromEvent(e, true); });
+const release = ()=>{ if (S.held){ S.held=false; gate(); } };
+mapC.addEventListener('pointerup', release); mapC.addEventListener('pointercancel', release);
+mapC.addEventListener('keydown', e=>{
+  const d = e.shiftKey ? 0.1 : 0.025, m = {ArrowLeft:[-d,0], ArrowRight:[d,0], ArrowUp:[0,-d], ArrowDown:[0,d]}[e.key];
+  if (!m) return; e.preventDefault(); S.p = clampToPoly({x:S.p.x+m[0], y:S.p.y+m[1]}); update();
+});
+
+function setPlaying(on){
+  S.playing = on; if (on) ensureAudio();
+  $('play').setAttribute('aria-pressed', on); $('playTxt').textContent = on ? 'Stop' : 'Play';
+  $('playIcon').innerHTML = on ? '<path d="M2 2h10v10H2z"/>' : '<path d="M2 1l11 6-11 6z"/>';
+  gate();
+}
+$('play').addEventListener('click', ()=> setPlaying(!S.playing));
+document.addEventListener('keydown', e=>{
+  if (e.code !== 'Space') return;
+  const tag = (e.target.tagName||'').toLowerCase();
+  if (['input','select','textarea','button'].includes(tag)) return;
+  e.preventDefault(); setPlaying(!S.playing);
+});
+$('vol').addEventListener('input', e=>{ S.vol = +e.target.value; gate(); });
+
+function seg(id, fn){
+  const el = $(id);
+  el.addEventListener('click', e=>{
+    const b = e.target.closest('button'); if (!b) return;
+    el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed', x===b));
+    fn(b.dataset.v);
+  });
+}
+seg('segN', v=> setLayout(+v));
+seg('segMode', v=>{ S.mode = v; update(); });
+seg('segVoice', v=>{ S.voice = v; setPitch(v==='w' ? 210 : 120); });
+
+const PMIN=70, PMAX=400;
+function setPitch(f){
+  S.f0 = f; $('pitch').value = Math.log(f/PMIN)/Math.log(PMAX/PMIN);
+  $('pitchOut').textContent = `${Math.round(f)} Hz · ${noteName(f)}`; update(true);
+}
+$('pitch').addEventListener('input', e=>{
+  const f = PMIN * (PMAX/PMIN)**(+e.target.value);
+  S.f0 = f; $('pitchOut').textContent = `${Math.round(f)} Hz · ${noteName(f)}`; update(true);
+});
+$('vib').addEventListener('change', e=>{ S.vib = e.target.checked; update(true); });
+
+// redraw on resize / theme change
+const redraw = ()=>{ readTheme(); update(); };
+new ResizeObserver(()=>update()).observe(mapC);
+new ResizeObserver(()=>update()).observe(harmC);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redraw);
+new MutationObserver(redraw).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+if (document.fonts) document.fonts.ready.then(()=>update());
+
+// ---------- Start: point halfway between ɑ and i ----------
+readTheme(); makeVerts(3); buildCorners();
+S.p = {x:(V[0].x+V[1].x)/2, y:(V[0].y+V[1].y)/2};
+setPitch(120);
+})();
+</script>
+
+</body></html>

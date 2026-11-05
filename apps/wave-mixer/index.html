@@ -1,0 +1,378 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Wave Mixer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one instrument panel — controls strip on top, the plot as the hero, frequency list beside it (stacks on phones) */
+:root {
+  --bg: #eef1f4;
+  --panel: #fbfcfd;
+  --fg: #18222d;
+  --muted: #5b6876;
+  --line: #d3dae2;
+  --grid: #e3e8ee;
+  --grid-major: #c6cfd9;
+  --accent: #1d5fd1;
+  --accent-ink: #ffffff;
+  --sum: #0e1a26;
+  --danger: #b4321f;
+  --c1: #1d5fd1; --c2: #d2691e; --c3: #138a63; --c4: #a8329b; --c5: #b08a00; --c6: #0d8aa8; --c7: #c23b55; --c8: #5a4fcf;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f151c; --panel: #161e27; --fg: #e3e9f0; --muted: #93a1b0; --line: #2a3644;
+    --grid: #1d2732; --grid-major: #2c3a49; --accent: #5b95f5; --accent-ink: #0b1220; --sum: #f2f6fa; --danger: #ff7a66;
+    --c1: #6aa2ff; --c2: #f0954a; --c3: #3fc994; --c4: #e27ad6; --c5: #e3c043; --c6: #4cc6e3; --c7: #f27791; --c8: #9b93ff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f151c; --panel: #161e27; --fg: #e3e9f0; --muted: #93a1b0; --line: #2a3644;
+  --grid: #1d2732; --grid-major: #2c3a49; --accent: #5b95f5; --accent-ink: #0b1220; --sum: #f2f6fa; --danger: #ff7a66;
+  --c1: #6aa2ff; --c2: #f0954a; --c3: #3fc994; --c4: #e27ad6; --c5: #e3c043; --c6: #4cc6e3; --c7: #f27791; --c8: #9b93ff;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; padding-block: 24px 40px; display: grid; gap: 18px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 20px; }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(1.6rem, 3vw, 2.1rem); margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0; }
+.label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+
+/* add strip */
+.add { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; padding: 14px 16px; }
+.field { display: grid; gap: 4px; }
+.field input[type=number] { font-family: var(--f-mono); font-size: 1rem; width: 9rem; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); }
+.field input.amp { width: 6rem; }
+.field input:focus-visible, button:focus-visible, input[type=range]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button { font: inherit; font-weight: 700; cursor: pointer; border-radius: 6px; padding: 8px 14px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); }
+button:hover { border-color: var(--muted); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+button.primary:hover { filter: brightness(1.08); }
+button.warn { color: var(--danger); }
+.quick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.quick button { font-family: var(--f-mono); font-weight: 400; font-size: 0.82rem; padding: 5px 9px; }
+.err { color: var(--danger); font-size: 0.88rem; min-height: 1.2em; flex-basis: 100%; margin: -4px 0 0; }
+.spacer { flex: 1; }
+.play { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.play button.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+
+/* main */
+.main { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 18px; align-items: start; }
+@media (max-width: 860px) { .main { grid-template-columns: minmax(0, 1fr); } }
+.plot { padding: 12px 12px 14px; display: grid; gap: 10px; min-width: 0; }
+.plot-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; align-items: baseline; padding-inline: 4px; }
+.readout { font-family: var(--f-mono); font-size: 0.82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.canvas-box { position: relative; width: 100%; aspect-ratio: 16 / 8; max-width: 100%; min-height: 240px; }
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; border-radius: 6px; }
+.empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); text-align: center; padding: 20px; pointer-events: none; }
+
+.scale { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px 22px; padding: 4px 4px 0; }
+.scale .row { display: grid; gap: 4px; }
+.scale .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.scale .val { font-family: var(--f-mono); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.checks { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.9rem; }
+.checks label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+.mini { font-size: 0.8rem; padding: 3px 8px; font-weight: 400; }
+
+/* list */
+.list { padding: 14px; display: grid; gap: 10px; }
+.list-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+li { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 8px 8px 10px; border: 1px solid var(--line); border-radius: 7px; }
+li.off { opacity: 0.45; }
+.swatch { width: 12px; height: 12px; border-radius: 3px; cursor: pointer; border: 0; padding: 0; }
+.fq { font-family: var(--f-mono); font-variant-numeric: tabular-nums; min-width: 0; }
+.fq b { font-weight: 600; }
+.fq small { display: block; color: var(--muted); font-size: 0.75rem; }
+.rm { padding: 2px 8px; font-weight: 400; color: var(--muted); }
+.none { color: var(--muted); font-size: 0.9rem; padding: 6px 2px; }
+.note { color: var(--muted); font-size: 0.8rem; margin: 0; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Wave Mixer</h1>
+    <p class="sub">Add sine frequencies, watch them sum, and listen to the result.</p>
+  </header>
+
+  <section class="panel add" aria-label="Add a frequency">
+    <form id="addForm" class="quick" style="gap:12px;align-items:end">
+      <div class="field">
+        <label class="label" for="freqIn">Frequency (Hz)</label>
+        <input id="freqIn" type="number" min="1" max="20000" step="any" placeholder="e.g. 440" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label class="label" for="ampIn">Amplitude</label>
+        <input id="ampIn" class="amp" type="number" min="0" max="10" step="0.1" value="1" inputmode="decimal">
+      </div>
+      <button class="primary" type="submit" id="addBtn">Add frequency</button>
+    </form>
+    <div class="quick" aria-label="Quick add">
+      <span class="label">Quick add</span>
+      <button type="button" data-f="220">220</button>
+      <button type="button" data-f="261.63">C4 261.63</button>
+      <button type="button" data-f="329.63">E4 329.63</button>
+      <button type="button" data-f="392">G4 392</button>
+      <button type="button" data-f="441">441</button>
+      <button type="button" data-f="880">880</button>
+    </div>
+    <p class="err" id="err" role="alert"></p>
+    <div class="spacer"></div>
+    <div class="play">
+      <button type="button" id="playBtn" aria-pressed="false">▶ Play sound</button>
+      <label class="label" for="vol">Volume</label>
+      <input id="vol" type="range" min="0" max="1" step="0.01" value="0.35" style="width:110px">
+    </div>
+  </section>
+
+  <div class="main">
+    <section class="panel plot" aria-label="Waveform graph">
+      <div class="plot-head">
+        <span class="label">Resulting waveform</span>
+        <span class="readout" id="readout"></span>
+      </div>
+      <div class="canvas-box">
+        <canvas id="cv" aria-label="Waveform plot"></canvas>
+        <div class="empty" id="empty" hidden></div>
+      </div>
+      <div class="scale">
+        <div class="row">
+          <div class="top"><label class="label" for="tspan">Time scale (window)</label><span class="val" id="tspanVal"></span></div>
+          <input id="tspan" type="range" min="0" max="1000" step="1">
+          <div class="checks"><button type="button" class="mini" id="fitBtn">Fit 3 cycles of lowest</button><button type="button" class="mini" id="beatBtn">Fit beat cycle</button></div>
+        </div>
+        <div class="row">
+          <div class="top"><label class="label" for="yscale">Amplitude scale (±)</label><span class="val" id="yscaleVal"></span></div>
+          <input id="yscale" type="range" min="0" max="1000" step="1">
+          <div class="checks"><label><input type="checkbox" id="autoY" checked> Auto-fit amplitude</label></div>
+        </div>
+        <div class="row">
+          <span class="label">Display</span>
+          <div class="checks">
+            <label><input type="checkbox" id="showParts" checked> Show individual waves</label>
+            <label><input type="checkbox" id="showSum" checked> Show sum</label>
+          </div>
+          <div class="checks"><button type="button" class="mini warn" id="clearGraph">Clear graph</button><button type="button" class="mini" id="redraw">Redraw graph</button></div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel list" aria-label="Frequencies">
+      <div class="list-head">
+        <span class="label">Frequencies <span id="count"></span></span>
+        <button type="button" class="mini warn" id="clearAll">Clear all</button>
+      </div>
+      <ul id="list"></ul>
+      <p class="note">Click a color swatch to mute or unmute a wave. Muted waves are left out of the sum and the sound.</p>
+    </aside>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const cv = $('cv'), ctx = cv.getContext('2d');
+  const COLORS = ['--c1','--c2','--c3','--c4','--c5','--c6','--c7','--c8'];
+  const NOTES = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+  let nextId = 1, colorIdx = 0;
+  // Example starting state: a perfect fifth (A4 + E5) so the plot shows something on load
+  let waves = [mk(440, 1), mk(659.26, 0.7)];
+  let graphCleared = false;
+  const T_MIN = 0.5, T_MAX = 500;      // ms
+  const Y_MIN = 0.1, Y_MAX = 20;
+  let tSpan = 10, yMax = 2;
+
+  function mk(f, a) { return { id: nextId++, f, a, on: true, color: COLORS[(colorIdx++) % COLORS.length] }; }
+  const tok = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const logMap = (v, lo, hi) => lo * Math.pow(hi / lo, v / 1000);
+  const logInv = (x, lo, hi) => Math.round(1000 * Math.log(x / lo) / Math.log(hi / lo));
+  function noteName(f) {
+    const n = 12 * Math.log2(f / 440) + 69, r = Math.round(n), c = Math.round((n - r) * 100);
+    if (r < 0 || r > 135) return '';
+    return NOTES[((r % 12) + 12) % 12] + (Math.floor(r / 12) - 1) + (c ? (c > 0 ? ' +' : ' ') + c + '¢' : '');
+  }
+  const fmtF = f => (Math.round(f * 100) / 100).toString();
+  const fmtT = ms => ms >= 100 ? ms.toFixed(0) + ' ms' : ms >= 10 ? ms.toFixed(1) + ' ms' : ms.toFixed(2) + ' ms';
+  const active = () => waves.filter(w => w.on && w.a > 0);
+
+  // --- add / remove ---
+  function addWave(f, a) {
+    $('err').textContent = '';
+    if (!isFinite(f) || f < 1 || f > 20000) { $('err').textContent = 'Enter a frequency between 1 and 20,000 Hz.'; return false; }
+    if (!isFinite(a) || a < 0 || a > 10) { $('err').textContent = 'Amplitude must be between 0 and 10.'; return false; }
+    if (waves.some(w => Math.abs(w.f - f) < 1e-6)) { $('err').textContent = fmtF(f) + ' Hz is already in the list.'; return false; }
+    waves.push(mk(f, a));
+    graphCleared = false;
+    changed();
+    return true;
+  }
+  $('addForm').addEventListener('submit', e => {
+    e.preventDefault();
+    if (addWave(parseFloat($('freqIn').value), parseFloat($('ampIn').value))) { $('freqIn').value = ''; $('freqIn').focus(); }
+  });
+  document.querySelectorAll('[data-f]').forEach(b => b.addEventListener('click', () => addWave(parseFloat(b.dataset.f), parseFloat($('ampIn').value) || 1)));
+  $('clearAll').addEventListener('click', () => { waves = []; colorIdx = 0; $('err').textContent = ''; changed(); });
+  $('clearGraph').addEventListener('click', () => { graphCleared = true; draw(); });
+  $('redraw').addEventListener('click', () => { graphCleared = false; draw(); });
+
+  function renderList() {
+    const ul = $('list'); ul.innerHTML = '';
+    $('count').textContent = waves.length ? '(' + waves.length + ')' : '';
+    if (!waves.length) { ul.innerHTML = '<li class="none" style="display:block;border:0">No frequencies yet. Type one above and press Add.</li>'; return; }
+    waves.forEach(w => {
+      const li = document.createElement('li'); if (!w.on) li.className = 'off';
+      const sw = document.createElement('button'); sw.className = 'swatch'; sw.style.background = `var(${w.color})`;
+      sw.title = w.on ? 'Mute this wave' : 'Unmute this wave'; sw.setAttribute('aria-label', sw.title + ' (' + fmtF(w.f) + ' Hz)');
+      sw.onclick = () => { w.on = !w.on; changed(); };
+      const d = document.createElement('div'); d.className = 'fq';
+      d.innerHTML = `<b>${fmtF(w.f)} Hz</b> · A ${w.a}<small>${noteName(w.f)} · period ${fmtT(1000 / w.f)}</small>`;
+      const rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '✕';
+      rm.setAttribute('aria-label', 'Remove ' + fmtF(w.f) + ' Hz'); rm.onclick = () => { waves = waves.filter(x => x !== w); changed(); };
+      li.append(sw, d, rm); ul.append(li);
+    });
+  }
+
+  // --- combined period (GCD of frequencies at 0.01 Hz resolution) ---
+  function gcd(a, b) { while (b) [a, b] = [b, a % b]; return a; }
+  function fundamental() {
+    const a = active(); if (!a.length) return null;
+    const g = a.map(w => Math.round(w.f * 100)).reduce(gcd) / 100;
+    return g >= 0.5 ? g : null;
+  }
+
+  // --- scale controls ---
+  function syncScaleUI() {
+    $('tspan').value = logInv(tSpan, T_MIN, T_MAX); $('tspanVal').textContent = fmtT(tSpan);
+    $('yscale').value = logInv(yMax, Y_MIN, Y_MAX); $('yscaleVal').textContent = '±' + yMax.toFixed(yMax < 1 ? 2 : 1);
+    $('yscale').disabled = $('autoY').checked;
+  }
+  $('tspan').addEventListener('input', e => { tSpan = logMap(+e.target.value, T_MIN, T_MAX); syncScaleUI(); draw(); });
+  $('yscale').addEventListener('input', e => { yMax = logMap(+e.target.value, Y_MIN, Y_MAX); syncScaleUI(); draw(); });
+  $('autoY').addEventListener('change', () => { syncScaleUI(); draw(); });
+  $('fitBtn').addEventListener('click', () => {
+    const a = active(); if (!a.length) return;
+    tSpan = Math.min(T_MAX, Math.max(T_MIN, 3000 / Math.min(...a.map(w => w.f)))); syncScaleUI(); draw();
+  });
+  $('beatBtn').addEventListener('click', () => {
+    const g = fundamental(); if (!g) return;
+    tSpan = Math.min(T_MAX, Math.max(T_MIN, 2000 / g)); syncScaleUI(); draw();
+  });
+  ['showParts', 'showSum'].forEach(id => $(id).addEventListener('change', draw));
+
+  // --- drawing ---
+  function sumAt(t) { let s = 0; for (const w of active()) s += w.a * Math.sin(2 * Math.PI * w.f * t); return s; }
+  function niceStep(range, target) {
+    const raw = range / target, p = Math.pow(10, Math.floor(Math.log10(raw))), n = raw / p;
+    return (n < 1.5 ? 1 : n < 3.5 ? 2 : n < 7.5 ? 5 : 10) * p;
+  }
+  function draw() {
+    const box = cv.parentElement.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    const W = Math.max(1, box.width), H = Math.max(1, box.height);
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    const A = active(), seconds = tSpan / 1000;
+    const L = 48, R = 12, T = 12, B = 30, pw = W - L - R, ph = H - T - B;
+
+    // amplitude range
+    let ym = yMax;
+    if ($('autoY').checked) {
+      let peak = 0; const N = Math.min(20000, Math.max(800, Math.ceil(pw * 4)));
+      for (let i = 0; i <= N; i++) peak = Math.max(peak, Math.abs(sumAt(seconds * i / N)));
+      for (const w of A) peak = Math.max(peak, w.a);
+      ym = peak > 0 ? peak * 1.12 : 1;
+      yMax = Math.min(Y_MAX, Math.max(Y_MIN, ym)); syncScaleUI();
+    }
+    const X = t => L + (t / seconds) * pw, Y = v => T + ph / 2 - (v / ym) * (ph / 2);
+
+    // grid
+    ctx.font = '11px ' + tok('--f-mono'); ctx.fillStyle = tok('--muted'); ctx.lineWidth = 1;
+    const xs = niceStep(tSpan, Math.max(3, Math.floor(pw / 90)));
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    for (let m = 0; m <= tSpan + 1e-9; m += xs) {
+      const x = Math.round(X(m / 1000)) + 0.5;
+      ctx.strokeStyle = tok('--grid'); ctx.beginPath(); ctx.moveTo(x, T); ctx.lineTo(x, T + ph); ctx.stroke();
+      ctx.fillText(+m.toFixed(4) + '', x, T + ph + 6);
+    }
+    ctx.textAlign = 'right'; ctx.fillText('ms', W - R, T + ph + 6 + 12);
+    const ys = niceStep(ym * 2, Math.max(2, Math.floor(ph / 50)));
+    ctx.textBaseline = 'middle';
+    for (let v = -Math.floor(ym / ys) * ys; v <= ym + 1e-9; v += ys) {
+      const y = Math.round(Y(v)) + 0.5;
+      ctx.strokeStyle = Math.abs(v) < 1e-9 ? tok('--grid-major') : tok('--grid');
+      ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(L + pw, y); ctx.stroke();
+      ctx.fillText(+v.toFixed(3) + '', L - 6, y);
+    }
+    ctx.strokeStyle = tok('--grid-major'); ctx.strokeRect(L + 0.5, T + 0.5, pw - 1, ph - 1);
+
+    // readout + empty state
+    const empty = $('empty');
+    const g = fundamental();
+    $('readout').textContent = A.length
+      ? `${A.length} wave${A.length > 1 ? 's' : ''} · window ${fmtT(tSpan)}` + (A.length > 1 ? (g ? ` · repeats every ${fmtT(1000 / g)} (${fmtF(g)} Hz)` : ' · no short repeat') : '')
+      : '';
+    if (graphCleared) { empty.hidden = false; empty.textContent = 'Graph cleared. Add a frequency or press Redraw graph.'; return; }
+    if (!A.length) { empty.hidden = false; empty.textContent = waves.length ? 'All waves are muted.' : 'Add a frequency to draw its waveform.'; return; }
+    empty.hidden = true;
+
+    ctx.save(); ctx.beginPath(); ctx.rect(L, T, pw, ph); ctx.clip();
+    const N = Math.min(40000, Math.max(600, Math.ceil(pw * 3)));
+    const trace = (fn, color, width, alpha) => {
+      ctx.strokeStyle = color; ctx.lineWidth = width; ctx.globalAlpha = alpha; ctx.lineJoin = 'round';
+      ctx.beginPath();
+      for (let i = 0; i <= N; i++) { const t = seconds * i / N; const x = X(t), y = Y(fn(t)); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+      ctx.stroke(); ctx.globalAlpha = 1;
+    };
+    if ($('showParts').checked && (A.length > 1 || !$('showSum').checked))
+      for (const w of A) trace(t => w.a * Math.sin(2 * Math.PI * w.f * t), tok(w.color), 1.2, 0.75);
+    if ($('showSum').checked) trace(sumAt, A.length === 1 ? tok(A[0].color) : tok('--sum'), 2.2, 1);
+    ctx.restore();
+  }
+
+  // --- audio ---
+  let ac = null, master = null, nodes = [], playing = false;
+  function startAudio() {
+    if (!ac) { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.connect(ac.destination); }
+    if (ac.state === 'suspended') ac.resume();
+    rebuildAudio();
+  }
+  function stopNodes() { const now = ac ? ac.currentTime : 0; nodes.forEach(n => { try { n.g.gain.setTargetAtTime(0, now, 0.01); n.o.stop(now + 0.08); } catch (e) {} }); nodes = []; }
+  function rebuildAudio() {
+    if (!ac) return;
+    stopNodes();
+    const A = active(), total = A.reduce((s, w) => s + w.a, 0) || 1;
+    const now = ac.currentTime, t0 = now + 0.03;
+    master.gain.setTargetAtTime(+$('vol').value, now, 0.02);
+    A.forEach(w => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.value = w.f; g.gain.setValueAtTime(0, now); g.gain.setTargetAtTime(w.a / total, t0, 0.015);
+      o.connect(g).connect(master); o.start(t0); nodes.push({ o, g });
+    });
+  }
+  $('playBtn').addEventListener('click', () => {
+    playing = !playing;
+    $('playBtn').classList.toggle('on', playing); $('playBtn').setAttribute('aria-pressed', playing);
+    $('playBtn').textContent = playing ? '■ Stop sound' : '▶ Play sound';
+    if (playing) startAudio(); else stopNodes();
+  });
+  $('vol').addEventListener('input', () => { if (master) master.gain.setTargetAtTime(+$('vol').value, ac.currentTime, 0.02); });
+
+  function changed() { renderList(); draw(); if (playing) rebuildAudio(); }
+
+  new ResizeObserver(() => draw()).observe(cv.parentElement);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+  new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  if (document.fonts) document.fonts.ready.then(draw);
+
+  syncScaleUI(); renderList(); draw();
+})();
+</script>
+
+</body></html>
