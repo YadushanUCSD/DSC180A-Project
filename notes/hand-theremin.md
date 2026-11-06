@@ -1,6 +1,6 @@
 # Hand Theremin (camera gesture synth)
 
-Single-file HTML, opened locally in Chrome/Edge. MediaPipe HandLandmarker (tasks-vision 0.10.14 via jsDelivr, numHands 2) + Web Audio additive synth.
+Single-file HTML ([apps/hand-theremin/index.html](../apps/hand-theremin/index.html)), opened locally in Chrome/Edge. MediaPipe HandLandmarker (tasks-vision 0.10.14 via jsDelivr, numHands 2) + Web Audio additive synth.
 
 ## Mapping
 ### Right hand — pitch and volume
