@@ -1,3 +1,6 @@
+AI Use Statement:
+As instructed by my project mentor, all code in this repo is vibe coded using Claude. The vibe coded project done in Claude were then pushed to this Repo by Claude. Claude also implemented the videos in this file as well as the hyperlinks to the other parts of this repo.
+
 # DSC180A Project — Agentic Sound Learning
 
 The long-term goal of this project is an application that lets people who cannot speak produce speech with their bodies: specific motions are mapped to specific speech sounds, and performing them in succession produces speech entirely digitally.
