@@ -1,5 +1,5 @@
 AI Use Statement:
-As instructed by my project mentor, all code in this repo is vibe coded using Claude. The vibe coded project done in Claude were then pushed to this Repo by Claude. Claude also implemented the videos in this file as well as the hyperlinks to the other parts of this repo.
+As instructed by my project mentor, all code in this repo is vibe coded using Claude. The vibe coded project done in Claude were then pushed to this Repo by Claude. Claude also implemented the videos in this file as well as the hyperlinks to the other parts of this repo. All videos made explaining the applications and writing of the report was done by me.
 
 # DSC180A Project — Agentic Sound Learning
 
