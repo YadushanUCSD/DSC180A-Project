@@ -1,5 +1,7 @@
 # Vowel Blend Map
 
+Video walkthrough: https://youtu.be/1HsPPfcJtGA
+
 Single-file HTML, canvas, Web Audio, no libraries.
 
 ## Idea

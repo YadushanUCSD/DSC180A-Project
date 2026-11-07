@@ -1,5 +1,7 @@
 # Harmonic Lab — Part 1 (harmonics & spectra) + voice analysis + filter
 
+Video walkthrough: https://youtu.be/ysGRJu2imYo
+
 Single-file HTML, canvas, no libraries. A standalone copy is needed for the microphone, since artifacts on this account can't use the mic. The artifact supports "Load recording" instead.
 
 ## Synth features

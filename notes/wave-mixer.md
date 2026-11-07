@@ -1,5 +1,7 @@
 # Wave Mixer (sine additive mixer)
 
+Video walkthrough: https://youtu.be/j-HT9900lNc
+
 Single-file HTML, canvas, Web Audio, no libraries.
 
 ## Features
